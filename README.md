@@ -1,7 +1,6 @@
 # My Gf's Health Tracker
 
-A sophisticated, PCOS-specific fitness tracking web application designed specifically for Rehma's health journey.
-
+A sophisticated, PCOS-specific fitness tracking web application
 ## Features
 
 ### 🌸 PCOS-Specific Health Tracking
