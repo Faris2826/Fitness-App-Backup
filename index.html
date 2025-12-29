@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rehma's Health Tracker</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    
+    <style>
+        :root {
+            /* Girly Theme Colors */
+            --bg-primary: #FFF5F8;
+            --bg-secondary: #FFFFFF;
+            --accent-primary: #FF69B4;
+            --accent-secondary: #FFB6C1;
+            --text-primary: #4A4A4A;
+            --text-secondary: #8A8A8A;
+            --cycle-glow: #FF69B4;
+            
+            /* Cycle Phase Colors */
+            --menstrual: #E91E63;
+            --follicular: #FF69B4;
+            --ovulation: #FF1493;
+            --luteal: #FFB6C1;
+            
+            /* Spacing */
+            --spacing-xs: 8px;
+            --spacing-sm: 16px;
+            --spacing-md: 24px;
+            --spacing-lg: 32px;
+            --spacing-xl: 48px;
+            
+            /* Typography */
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #1A1A1A;
+            --bg-secondary: #2D2D2D;
+            --accent-primary: #A8C090;
+            --accent-secondary: #C49B9B;
+            --text-primary: #F5F5F5;
+            --text-secondary: #B0B0B0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Dynamic Background Glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, var(--cycle-glow)10 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.3;
+            animation: breathe 4s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.4; }
+        }
+        
+        /* Header */
+        .header {
+            padding: var(--spacing-sm);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid rgba(255, 105, 180, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .app-title {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(0,0,0,0.1);
+            transform: scale(1.1);
+        }
+        
+        .current-date {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: var(--spacing-md);
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-bottom: 90px; /* Increased to account for bottom navigation */
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        @media (min-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 2fr 1fr 1fr;
+            }
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: var(--spacing-lg);
+            box-shadow: 0 8px 30px rgba(255, 105, 180, 0.1);
+            border: 1px solid rgba(255, 105, 180, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-icon {
+            font-size: 24px;
+            opacity: 0.7;
+        }
+        
+        /* Cycle Status Card */
+        .cycle-status {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--accent-primary)20, var(--accent-secondary)20);
+            border: 2px solid var(--cycle-glow);
+        }
+        
+        .cycle-phase {
+            text-align: center;
+            padding: var(--spacing-md);
+            border-radius: 12px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .cycle-phase h3 {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+        
+        .cycle-phase p {
+            color: var(--text-secondary);
+            margin: 4px 0;
+            font-weight: 500;
+        }
+        
+        /* Progress Cards */
+        .progress-card {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .progress-title {
+            font-family: var(--font-serif);
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .progress-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        
+        .progress-bar-container {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin-top: 4px;
+        }
+        
+        /* Water Intake */
+        .water-glasses {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-xs);
+            margin-top: var(--spacing-sm);
+        }
+        
+        .water-glass {
+            aspect-ratio: 1;
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .water-glass:hover {
+            background: var(--accent-primary)20;
+            transform: scale(1.05);
+        }
+        
+        .water-glass.filled {
+            background: var(--accent-primary);
+            color: white;
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-sm);
+        }
+        
+        .quick-action-btn {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            font-family: var(--font-sans);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            min-height: 80px;
+        }
+        
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .quick-action-icon {
+            font-size: 24px;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 12px;
+            padding: var(--spacing-sm);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            max-width: 300px;
+        }
+        
+        .notification-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .notification button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid rgba(255, 105, 180, 0.2);
+            padding: var(--spacing-sm);
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            height: 70px;
+            align-items: center;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 12px;
+            min-width: 60px;
+            font-weight: 500;
+        }
+        
+        .nav-item.active {
+            color: var(--accent-primary);
+            background: var(--accent-primary)20;
+        }
+        
+        .nav-item:hover {
+            color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* Celebrations */
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-secondary);
+            border: 2px solid var(--accent-primary);
+            border-radius: 20px;
+            padding: var(--spacing-xl);
+            text-align: center;
+            z-index: 2000;
+            animation: celebrationPop 0.5s ease;
+        }
+        
+        .celebration h2 {
+            font-family: var(--font-serif);
+            font-size: 32px;
+            color: var(--accent-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        @keyframes celebrationPop {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--spacing-sm);
+            }
+            
+            .dashboard-grid {
+                gap: var(--spacing-sm);
+            }
+            
+            .card {
+                padding: var(--spacing-sm);
+            }
+            
+            .cycle-phase h3 {
+                font-size: 24px;
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--accent-primary);
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1 class="app-title">Rehma's Health Tracker</h1>
+        <div class="header-controls">
+            <span class="current-date" id="current-date"></span>
+            <button class="theme-toggle" aria-label="Toggle theme">🌓</button>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Cycle Status -->
+            <div class="card cycle-status" id="cycle-status">
+                <div class="cycle-phase">
+                    <h3>Luteal Phase</h3>
+                    <p>Day 24 of 29</p>
+                    <p>9 days in current phase</p>
+                </div>
+            </div>
+            
+            <!-- Calorie Target -->
+            <div class="card progress-card">
+                <div class="progress-header">
+                    <h3 class="progress-title">Daily Calories</h3>
+                    <span class="progress-value">1517</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar calorie-progress-bar" style="width: 65%"></div>
+                </div>
+                <p class="progress-text">987 / 1517 calories today</p>
+            </div>
+            
+            <!-- Water Intake -->
+            <div class="card progress-card">
+                <div class="progress-header">
+                    <h3 class="progress-title">Water Intake</h3>
+                    <span class="progress-value">13</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar water-progress-bar" style="width: 46%"></div>
+                </div>
+                <p class="progress-text">6 / 13 glasses today</p>
+                
+                <!-- Water Glasses -->
+                <div class="water-glasses">
+                    <button class="water-glass filled" aria-label="Water glass 1">💧</button>
+                    <button class="water-glass filled" aria-label="Water glass 2">💧</button>
+                    <button class="water-glass filled" aria-label="Water glass 3">💧</button>
+                    <button class="water-glass filled" aria-label="Water glass 4">💧</button>
+                    <button class="water-glass filled" aria-label="Water glass 5">💧</button>
+                    <button class="water-glass filled" aria-label="Water glass 6">💧</button>
+                    <button class="water-glass" aria-label="Water glass 7">+</button>
+                    <button class="water-glass" aria-label="Water glass 8">+</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-action-btn add-food-btn">
+                <span class="quick-action-icon">🍽️</span>
+                <span>Log Food</span>
+            </button>
+            <button class="quick-action-btn add-workout-btn">
+                <span class="quick-action-icon">💪</span>
+                <span>Log Workout</span>
+            </button>
+            <button class="quick-action-btn" onclick="window.location.href='calendar.html'">
+                <span class="quick-action-icon">📅</span>
+                <span>View Calendar</span>
+            </button>
+            <button class="quick-action-btn" onclick="window.location.href='progress.html'">
+                <span class="quick-action-icon">📊</span>
+                <span>View Progress</span>
+            </button>
+        </div>
+        
+        <!-- Today's Summary -->
+        <div class="card" style="margin-top: var(--spacing-lg);">
+            <div class="card-header">
+                <h3 class="card-title">Today's Summary</h3>
+                <span class="card-icon">📋</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-sm); margin-top: var(--spacing-sm);">
+                <div style="text-align: center; padding: var(--spacing-sm); background: rgba(0,0,0,0.05); border-radius: 8px;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--accent-primary);">987</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Calories Eaten</div>
+                </div>
+                <div style="text-align: center; padding: var(--spacing-sm); background: rgba(0,0,0,0.05); border-radius: 8px;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--accent-primary);">292</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Calories Burned</div>
+                </div>
+                <div style="text-align: center; padding: var(--spacing-sm); background: rgba(0,0,0,0.05); border-radius: 8px;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--accent-primary);">1</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Workouts</div>
+                </div>
+                <div style="text-align: center; padding: var(--spacing-sm); background: rgba(0,0,0,0.05); border-radius: 8px;">
+                    <div style="font-size: 24px; font-weight: 700; color: var(--accent-primary);">6</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Water Glasses</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendations -->
+        <div class="card" style="margin-top: var(--spacing-lg);">
+            <div class="card-header">
+                <h3 class="card-title">Today's Recommendations</h3>
+                <span class="card-icon">💡</span>
+            </div>
+            <div style="margin-top: var(--spacing-sm);">
+                <div style="background: rgba(156, 175, 136, 0.1); padding: var(--spacing-sm); border-radius: 8px; margin-bottom: var(--spacing-sm);">
+                    <h4 style="color: var(--accent-primary); margin-bottom: 8px;">🍽️ Nutrition</h4>
+                    <p style="font-size: 14px;">Focus on complex carbs and calcium-rich foods. Great time for a balanced meal with lean protein.</p>
+                </div>
+                <div style="background: rgba(212, 165, 165, 0.1); padding: var(--spacing-sm); border-radius: 8px; margin-bottom: var(--spacing-sm);">
+                    <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">💪 Exercise</h4>
+                    <p style="font-size: 14px;">Moderate cardio or strength training would be ideal. Your energy levels are stable in this phase.</p>
+                </div>
+                <div style="background: rgba(255, 165, 0, 0.1); padding: var(--spacing-sm); border-radius: 8px;">
+                    <h4 style="color: #FFA500; margin-bottom: 8px;">🌙 Lifestyle</h4>
+                    <p style="font-size: 14px;">Aim for 8 hours of sleep. Balance social activities with rest as energy may start to decline.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="calendar.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Calendar</span>
+        </a>
+        <a href="progress.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Progress</span>
+        </a>
+        <a href="workouts.html" class="nav-item">
+            <span class="nav-icon">💪</span>
+            <span class="nav-label">Workouts</span>
+        </a>
+        <a href="analytics.html" class="nav-item">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Analytics</span>
+        </a>
+    </nav>
+    
+    <!-- Main JavaScript -->
+    <script src="main.js"></script>
+    
+    <script>
+        // Initialize current date display
+        function updateCurrentDate() {
+            const dateElement = document.getElementById('current-date');
+            if (dateElement) {
+                const today = new Date();
+                const options = { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                };
+                dateElement.textContent = today.toLocaleDateString('en-US', options);
+            }
+        }
+        
+        // Initialize water glass interactions
+        function initializeWaterGlasses() {
+            const waterGlasses = document.querySelectorAll('.water-glass');
+            waterGlasses.forEach((glass, index) => {
+                glass.addEventListener('click', () => {
+                    // Fill all glasses up to and including clicked one
+                    waterGlasses.forEach((g, i) => {
+                        if (i <= index) {
+                            g.classList.add('filled');
+                            g.textContent = '💧';
+                        } else {
+                            g.classList.remove('filled');
+                            g.textContent = '+';
+                        }
+                    });
+                    
+                    // Update progress
+                    const filled = document.querySelectorAll('.water-glass.filled').length;
+                    const progressBar = document.querySelector('.water-progress-bar');
+                    const progressText = document.querySelector('.progress-text');
+                    
+                    if (progressBar && progressText) {
+                        const percentage = (filled / 13) * 100;
+                        progressBar.style.width = `${Math.min(percentage, 100)}%`;
+                        progressText.textContent = `${filled}/13 glasses`;
+                    }
+                    
+                    // Celebration for reaching goal
+                    if (filled === 13) {
+                        showCelebration('Water Goal Achieved! 🎉');
+                    }
+                });
+            });
+        }
+        
+        // Celebration animation
+        function showCelebration(message) {
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            celebration.innerHTML = `
+                <div class="celebration-content">
+                    <h2>${message}</h2>
+                    <p>Great job staying hydrated!</p>
+                </div>
+            `;
+            
+            document.body.appendChild(celebration);
+            
+            setTimeout(() => {
+                celebration.remove();
+            }, 3000);
+        }
+        
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCurrentDate();
+            initializeWaterGlasses();
+            
+            // Update date every minute
+            setInterval(updateCurrentDate, 60000);
+            
+            // Simulate real-time updates
+            setInterval(() => {
+                // Update progress bars with slight changes for demo
+                const waterProgress = document.querySelector('.water-progress-bar');
+                const calorieProgress = document.querySelector('.calorie-progress-bar');
+                
+                if (waterProgress) {
+                    const currentWidth = parseFloat(waterProgress.style.width) || 46;
+                    if (currentWidth < 100) {
+                        waterProgress.style.width = `${Math.min(currentWidth + 0.1, 100)}%`;
+                    }
+                }
+            }, 30000); // Every 30 seconds
+        });
+        
+        // Add smooth scrolling
+        document.documentElement.style.scrollBehavior = 'smooth';
+        
+        // Add touch feedback for mobile
+        document.addEventListener('touchstart', (e) => {
+            if (e.target.matches('.water-glass, .quick-action-btn, .nav-item')) {
+                e.target.style.transform = 'scale(0.95)';
+            }
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            if (e.target.matches('.water-glass, .quick-action-btn, .nav-item')) {
+                setTimeout(() => {
+                    e.target.style.transform = '';
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>

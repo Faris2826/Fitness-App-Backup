@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress - Rehma's Health Tracker</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    
+    <style>
+        :root {
+            /* Light Theme Colors */
+            --bg-primary: #FFF5F8;
+            --bg-secondary: #FFFFFF;
+            --accent-primary: #FF69B4;
+            --accent-secondary: #FFB6C1;
+            --text-primary: #4A4A4A;
+            --text-secondary: #8A8A8A;
+            --cycle-glow: #FF69B4;
+            
+            /* Cycle Phase Colors */
+            --menstrual: #E91E63;
+            --follicular: #FF69B4;
+            --ovulation: #FF1493;
+            --luteal: #FFB6C1;
+            
+            /* Spacing */
+            --spacing-xs: 8px;
+            --spacing-sm: 16px;
+            --spacing-md: 24px;
+            --spacing-lg: 32px;
+            --spacing-xl: 48px;
+            
+            /* Typography */
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #1A1A1A;
+            --bg-secondary: #2D2D2D;
+            --accent-primary: #A8C090;
+            --accent-secondary: #C49B9B;
+            --text-primary: #F5F5F5;
+            --text-secondary: #B0B0B0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Dynamic Background Glow */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, var(--cycle-glow)10 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.3;
+            animation: breathe 4s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.4; }
+        }
+        
+        /* Header */
+        .header {
+            padding: var(--spacing-sm);
+            background: var(--bg-secondary);
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .app-title {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(0,0,0,0.1);
+            transform: scale(1.1);
+        }
+        
+        .time-range-selector {
+            display: flex;
+            background: rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .time-range-btn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .time-range-btn.active {
+            background: var(--accent-primary);
+            color: white;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: var(--spacing-md);
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: 100px;
+        }
+        
+        /* Progress Grid */
+        .progress-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        @media (min-width: 1024px) {
+            .progress-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: var(--spacing-md);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-icon {
+            font-size: 28px;
+            opacity: 0.7;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            height: 400px;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .chart-small {
+            height: 250px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .stat-card {
+            background: rgba(0,0,0,0.05);
+            border-radius: 12px;
+            padding: var(--spacing-md);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            background: rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .stat-change {
+            font-size: 12px;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        
+        .stat-change.positive {
+            color: #4CAF50;
+        }
+        
+        .stat-change.negative {
+            color: #F44336;
+        }
+        
+        /* Cycle Report */
+        .cycle-report {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .cycle-phases {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .phase-card {
+            background: rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding: var(--spacing-sm);
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .phase-card.menstrual {
+            border-color: var(--menstrual);
+            background: var(--menstrual)10;
+        }
+        
+        .phase-card.follicular {
+            border-color: var(--follicular);
+            background: var(--follicular)10;
+        }
+        
+        .phase-card.ovulation {
+            border-color: var(--ovulation);
+            background: var(--ovulation)10;
+        }
+        
+        .phase-card.luteal {
+            border-color: var(--luteal);
+            background: var(--luteal)10;
+        }
+        
+        .phase-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .phase-days {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .phase-avg {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        
+        /* Insights */
+        .insights-list {
+            list-style: none;
+        }
+        
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            border-radius: 8px;
+            margin-bottom: var(--spacing-xs);
+            background: rgba(0,0,0,0.03);
+        }
+        
+        .insight-icon {
+            font-size: 20px;
+            margin-top: 2px;
+        }
+        
+        .insight-content {
+            flex: 1;
+        }
+        
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .insight-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        /* Weight Tracking */
+        .weight-input-group {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .weight-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+        }
+        
+        .weight-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        
+        .update-weight-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .update-weight-btn:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-2px);
+        }
+        
+        /* Progress Indicators */
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding: var(--spacing-sm);
+            display: flex;
+            justify-content: space-around;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 8px;
+            border-radius: 8px;
+            min-width: 60px;
+        }
+        
+        .nav-item.active {
+            color: var(--accent-primary);
+            background: var(--accent-primary)20;
+        }
+        
+        .nav-item:hover {
+            color: var(--accent-primary);
+            transform: translateY(-2px);
+        }
+        
+        .nav-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .nav-label {
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: var(--spacing-sm);
+            }
+            
+            .progress-grid {
+                gap: var(--spacing-md);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .cycle-phases {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        /* Loading States */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--accent-primary);
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1 class="app-title">Progress</h1>
+        <div class="header-controls">
+            <div class="time-range-selector">
+                <button class="time-range-btn" data-range="week">Week</button>
+                <button class="time-range-btn active" data-range="month">Month</button>
+                <button class="time-range-btn" data-range="quarter">Quarter</button>
+            </div>
+            <button class="theme-toggle" aria-label="Toggle theme">🌓</button>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Stats Overview -->
+        <div class="stats-grid fade-in-up">
+            <div class="stat-card">
+                <div class="stat-value">-2.3</div>
+                <div class="stat-label">kg Lost</div>
+                <div class="stat-change positive">↓ 0.8kg this month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">1,517</div>
+                <div class="stat-label">Avg Calories</div>
+                <div class="stat-change negative">↑ 12% from last month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">4.2</div>
+                <div class="stat-label">Weekly Workouts</div>
+                <div class="stat-change positive">↑ 0.5 from last month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Water Goal</div>
+                <div class="stat-change positive">↑ 92% completion</div>
+            </div>
+        </div>
+        
+        <div class="progress-grid">
+            <!-- Main Charts -->
+            <div>
+                <!-- Weight Progress -->
+                <div class="card fade-in-up" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Weight Progress</h2>
+                        <span class="card-icon">📊</span>
+                    </div>
+                    <div class="chart-container" id="weight-chart"></div>
+                    
+                    <!-- Weight Update -->
+                    <div style="margin-top: var(--spacing-md);">
+                        <h4 style="margin-bottom: var(--spacing-sm);">Update Weight</h4>
+                        <div class="weight-input-group">
+                            <input type="number" class="weight-input" placeholder="65.0" step="0.1" min="30" max="200">
+                            <span style="font-weight: 600;">kg</span>
+                            <button class="update-weight-btn">Update</button>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                            Last updated: December 1, 2024
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Calorie Balance -->
+                <div class="card fade-in-up" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Calorie Balance</h2>
+                        <span class="card-icon">⚖️</span>
+                    </div>
+                    <div class="chart-container" id="calorie-chart"></div>
+                </div>
+                
+                <!-- Cycle Analysis -->
+                <div class="card fade-in-up">
+                    <div class="card-header">
+                        <h2 class="card-title">Cycle Analysis</h2>
+                        <span class="card-icon">🌙</span>
+                    </div>
+                    <div class="chart-container" id="cycle-chart"></div>
+                </div>
+            </div>
+            
+            <!-- Side Panel -->
+            <div>
+                <!-- Cycle Report -->
+                <div class="card fade-in-up" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Cycle Report</h2>
+                        <span class="card-icon">📋</span>
+                    </div>
+                    
+                    <div class="cycle-report">
+                        <div class="cycle-phases">
+                            <div class="phase-card menstrual">
+                                <div class="phase-name">Menstrual</div>
+                                <div class="phase-days">5 days</div>
+                                <div class="phase-avg">Avg: 4.8 days</div>
+                            </div>
+                            <div class="phase-card follicular">
+                                <div class="phase-name">Follicular</div>
+                                <div class="phase-days">7 days</div>
+                                <div class="phase-avg">Avg: 7.2 days</div>
+                            </div>
+                            <div class="phase-card ovulation">
+                                <div class="phase-name">Ovulation</div>
+                                <div class="phase-days">3 days</div>
+                                <div class="phase-avg">Avg: 2.8 days</div>
+                            </div>
+                            <div class="phase-card luteal active">
+                                <div class="phase-name">Luteal</div>
+                                <div class="phase-days">13 days</div>
+                                <div class="phase-avg">Avg: 14.2 days</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: var(--spacing-md);">
+                            <h4 style="margin-bottom: var(--spacing-sm);">Cycle Insights</h4>
+                            <ul class="insights-list">
+                                <li class="insight-item">
+                                    <span class="insight-icon">📈</span>
+                                    <div class="insight-content">
+                                        <div class="insight-title">Cycle Length Trend</div>
+                                        <div class="insight-description">Your cycles have been averaging 29 days, which is within the normal range for PCOS.</div>
+                                    </div>
+                                </li>
+                                <li class="insight-item">
+                                    <span class="insight-icon">🎯</span>
+                                    <div class="insight-content">
+                                        <div class="insight-title">Weight Loss Pattern</div>
+                                        <div class="insight-description">You tend to lose more weight during the follicular phase. Consider adjusting your goals accordingly.</div>
+                                    </div>
+                                </li>
+                                <li class="insight-item">
+                                    <span class="insight-icon">💪</span>
+                                    <div class="insight-content">
+                                        <div class="insight-title">Exercise Performance</div>
+                                        <div class="insight-description">Your workout intensity peaks during ovulation phase. Plan challenging workouts accordingly.</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Goals Progress -->
+                <div class="card fade-in-up" style="margin-bottom: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h2 class="card-title">Goals Progress</h2>
+                        <span class="card-icon">🎯</span>
+                    </div>
+                    
+                    <div style="margin-bottom: var(--spacing-md);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600;">Target Weight (60kg)</span>
+                            <span style="color: var(--accent-primary); font-weight: 600;">65kg</span>
+                        </div>
+                        <div class="progress-indicator">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 75%;"></div>
+                            </div>
+                            <span class="progress-text">75%</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: var(--spacing-md);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600;">Weekly Workouts (4)</span>
+                            <span style="color: var(--accent-primary); font-weight: 600;">4.2 avg</span>
+                        </div>
+                        <div class="progress-indicator">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%;"></div>
+                            </div>
+                            <span class="progress-text">105%</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600;">Daily Water (13 glasses)</span>
+                            <span style="color: var(--accent-primary); font-weight: 600;">12 avg</span>
+                        </div>
+                        <div class="progress-indicator">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 92%;"></div>
+                            </div>
+                            <span class="progress-text">92%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Predictions -->
+                <div class="card fade-in-up">
+                    <div class="card-header">
+                        <h2 class="card-title">Predictions</h2>
+                        <span class="card-icon">🔮</span>
+                    </div>
+                    
+                    <div style="margin-bottom: var(--spacing-md);">
+                        <h4 style="margin-bottom: 8px; color: var(--menstrual);">Next Period</h4>
+                        <p style="font-size: 14px; color: var(--text-secondary);">
+                            Predicted: December 18, 2024<br>
+                            Confidence: 85%
+                        </p>
+                    </div>
+                    
+                    <div style="margin-bottom: var(--spacing-md);">
+                        <h4 style="margin-bottom: 8px; color: var(--follicular);">Next Ovulation</h4>
+                        <p style="font-size: 14px; color: var(--text-secondary);">
+                            Predicted: December 31, 2024 - January 2, 2025<br>
+                            Confidence: 78%
+                        </p>
+                    </div>
+                    
+                    <div>
+                        <h4 style="margin-bottom: 8px; color: var(--accent-primary);">Weight Projection</h4>
+                        <p style="font-size: 14px; color: var(--text-secondary);">
+                            At current rate: 63.5kg by January 15, 2025<br>
+                            Target achievement: February 28, 2025
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="calendar.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Calendar</span>
+        </a>
+        <a href="progress.html" class="nav-item active">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Progress</span>
+        </a>
+        <a href="workouts.html" class="nav-item">
+            <span class="nav-icon">💪</span>
+            <span class="nav-label">Workouts</span>
+        </a>
+        <a href="analytics.html" class="nav-item">
+            <span class="nav-icon">📈</span>
+            <span class="nav-label">Analytics</span>
+        </a>
+    </nav>
+    
+    <!-- Main JavaScript -->
+    <script src="main.js"></script>
+    
+    <script>
+        // Chart initialization and data visualization
+        class ProgressCharts {
+            constructor() {
+                this.init();
+            }
+            
+            init() {
+                this.initWeightChart();
+                this.initCalorieChart();
+                this.initCycleChart();
+                this.setupEventListeners();
+            }
+            
+            initWeightChart() {
+                const chart = echarts.init(document.getElementById('weight-chart'));
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#9CAF88',
+                        textStyle: { color: '#2C2C2C' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['Oct 1', 'Oct 15', 'Nov 1', 'Nov 15', 'Dec 1', 'Dec 15'],
+                        axisLine: { lineStyle: { color: '#6B6B6B' } },
+                        axisTick: { lineStyle: { color: '#6B6B6B' } },
+                        axisLabel: { color: '#6B6B6B' }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 62,
+                        max: 68,
+                        axisLine: { lineStyle: { color: '#6B6B6B' } },
+                        axisTick: { lineStyle: { color: '#6B6B6B' } },
+                        axisLabel: { color: '#6B6B6B' },
+                        splitLine: { lineStyle: { color: 'rgba(0,0,0,0.1)' } }
+                    },
+                    series: [{
+                        name: 'Weight',
+                        type: 'line',
+                        data: [67.2, 66.8, 66.1, 65.5, 65.2, 64.9],
+                        smooth: true,
+                        lineStyle: { color: '#9CAF88', width: 3 },
+                        itemStyle: { color: '#9CAF88' },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(156, 175, 136, 0.3)' },
+                                    { offset: 1, color: 'rgba(156, 175, 136, 0.1)' }
+                                ]
+                            }
+                        }
+                    }]
+                };
+                
+                chart.setOption(option);
+                
+                // Responsive resize
+                window.addEventListener('resize', () => chart.resize());
+            }
+            
+            initCalorieChart() {
+                const chart = echarts.init(document.getElementById('calorie-chart'));
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#9CAF88',
+                        textStyle: { color: '#2C2C2C' }
+                    },
+                    legend: {
+                        data: ['Consumed', 'Burned', 'Target'],
+                        textStyle: { color: '#2C2C2C' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        axisLine: { lineStyle: { color: '#6B6B6B' } },
+                        axisTick: { lineStyle: { color: '#6B6B6B' } },
+                        axisLabel: { color: '#6B6B6B' }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        axisLine: { lineStyle: { color: '#6B6B6B' } },
+                        axisTick: { lineStyle: { color: '#6B6B6B' } },
+                        axisLabel: { color: '#6B6B6B' },
+                        splitLine: { lineStyle: { color: 'rgba(0,0,0,0.1)' } }
+                    },
+                    series: [
+                        {
+                            name: 'Consumed',
+                            type: 'bar',
+                            data: [1450, 1520, 1380, 1650, 1420, 1580, 1490],
+                            itemStyle: { color: '#D4A5A5' }
+                        },
+                        {
+                            name: 'Burned',
+                            type: 'bar',
+                            data: [320, 280, 350, 290, 380, 250, 300],
+                            itemStyle: { color: '#9CAF88' }
+                        },
+                        {
+                            name: 'Target',
+                            type: 'line',
+                            data: [1517, 1517, 1517, 1517, 1517, 1517, 1517],
+                            lineStyle: { color: '#FF69B4', type: 'dashed' },
+                            itemStyle: { color: '#FF69B4' }
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                window.addEventListener('resize', () => chart.resize());
+            }
+            
+            initCycleChart() {
+                const chart = echarts.init(document.getElementById('cycle-chart'));
+                
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        borderColor: '#9CAF88',
+                        textStyle: { color: '#2C2C2C' }
+                    },
+                    grid: {
+                        left: '3%',
+                        right: '4%',
+                        bottom: '3%',
+                        containLabel: true
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        axisLine: { lineStyle: { color: '#6B6B6B' } },
+                        axisTick: { lineStyle: { color: '#6B6B6B' } },
+                        axisLabel: { color: '#6B6B6B' }
+                    },
+                    yAxis: [
+                        {
+                            type: 'value',
+                            name: 'Energy Level',
+                            min: 0,
+                            max: 10,
+                            axisLine: { lineStyle: { color: '#6B6B6B' } },
+                            axisTick: { lineStyle: { color: '#6B6B6B' } },
+                            axisLabel: { color: '#6B6B6B' },
+                            splitLine: { lineStyle: { color: 'rgba(0,0,0,0.1)' } }
+                        },
+                        {
+                            type: 'value',
+                            name: 'Weight Change',
+                            min: -1,
+                            max: 1,
+                            axisLine: { lineStyle: { color: '#6B6B6B' } },
+                            axisTick: { lineStyle: { color: '#6B6B6B' } },
+                            axisLabel: { color: '#6B6B6B' }
+                        }
+                    ],
+                    series: [
+                        {
+                            name: 'Energy Level',
+                            type: 'line',
+                            data: [6, 8, 9, 7],
+                            smooth: true,
+                            lineStyle: { color: '#9CAF88', width: 3 },
+                            itemStyle: { color: '#9CAF88' }
+                        },
+                        {
+                            name: 'Weight Change',
+                            type: 'bar',
+                            yAxisIndex: 1,
+                            data: [-0.2, -0.8, -0.3, -0.1],
+                            itemStyle: { color: '#D4A5A5' }
+                        }
+                    ]
+                };
+                
+                chart.setOption(option);
+                window.addEventListener('resize', () => chart.resize());
+            }
+            
+            setupEventListeners() {
+                // Time range selector
+                document.querySelectorAll('.time-range-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        
+                        // Update charts based on selected range
+                        this.updateChartsForRange(e.target.dataset.range);
+                    });
+                });
+                
+                // Weight update
+                document.querySelector('.update-weight-btn').addEventListener('click', () => {
+                    const weightInput = document.querySelector('.weight-input');
+                    const newWeight = parseFloat(weightInput.value);
+                    
+                    if (newWeight && newWeight > 0) {
+                        this.updateWeight(newWeight);
+                        weightInput.value = '';
+                        
+                        // Show success message
+                        this.showNotification('Weight updated successfully! 🎉');
+                    }
+                });
+            }
+            
+            updateChartsForRange(range) {
+                // This would update chart data based on selected time range
+                console.log('Updating charts for range:', range);
+                
+                // Simulate data update
+                setTimeout(() => {
+                    this.showNotification(`Charts updated for ${range} view 📊`);
+                }, 500);
+            }
+            
+            updateWeight(newWeight) {
+                // This would integrate with the main fitness tracker
+                console.log('Updating weight to:', newWeight);
+                
+                // Update the weight chart with new data point
+                // In real implementation, this would save to database and update all related calculations
+            }
+            
+            showNotification(message) {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--accent-primary);
+                    border-radius: 12px;
+                    padding: 16px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    animation: slideIn 0.3s ease;
+                    max-width: 300px;
+                `;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new ProgressCharts();
+            
+            // Theme toggle functionality
+            const themeToggle = document.querySelector('.theme-toggle');
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                // Reinitialize charts with new theme
+                setTimeout(() => {
+                    new ProgressCharts();
+                }, 100);
+            });
+            
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Add entrance animations
+            document.querySelectorAll('.fade-in-up').forEach((el, index) => {
+                el.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+</body>
+</html>
