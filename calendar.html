@@ -2,1111 +2,504 @@
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendar - Rehma's Health Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calendar - Rehma Health OS</title>
     
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
-    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#FF69B4">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
     <style>
         :root {
-            /* Light Theme Colors */
-            --bg-primary: #FFF5F8;
-            --bg-secondary: #FFFFFF;
-            --accent-primary: #FF69B4;
-            --accent-secondary: #FFB6C1;
-            --text-primary: #4A4A4A;
-            --text-secondary: #8A8A8A;
-            --cycle-glow: #FF69B4;
+            /* Light Theme */
+            --bg-body: #FFF0F5;
+            --bg-card: #FFFFFF;
+            --text-main: #2D3748;
+            --text-sub: #718096;
+            --primary: #FF69B4;
+            --primary-soft: #FFB6C1;
+            --primary-dim: rgba(255, 105, 180, 0.1);
             
-            /* Cycle Phase Colors */
-            --menstrual: #E91E63;
-            --follicular: #FF69B4;
-            --ovulation: #FF1493;
-            --luteal: #FFB6C1;
-            
-            /* Spacing */
-            --spacing-xs: 8px;
-            --spacing-sm: 16px;
-            --spacing-md: 24px;
-            --spacing-lg: 32px;
-            --spacing-xl: 48px;
-            
-            /* Typography */
-            --font-serif: 'Playfair Display', serif;
-            --font-sans: 'Inter', sans-serif;
+            --border: #F7FAFC;
+            --input-bg: #F7FAFC;
+            --shadow-card: 0 8px 24px rgba(255, 105, 180, 0.08);
+            --radius-l: 28px;
+            --radius-m: 20px;
         }
-        
+
         [data-theme="dark"] {
-            --bg-primary: #1A1A1A;
-            --bg-secondary: #2D2D2D;
-            --accent-primary: #A8C090;
-            --accent-secondary: #C49B9B;
-            --text-primary: #F5F5F5;
-            --text-secondary: #B0B0B0;
+            /* Dark Theme */
+            --bg-body: #121212;
+            --bg-card: #1E1E1E;
+            --text-main: #F7FAFC;
+            --text-sub: #A0AEC0;
+            --primary: #FF69B4;
+            --primary-soft: #D53F8C;
+            --primary-dim: rgba(255, 105, 180, 0.2);
+            
+            --border: #2D3748;
+            --input-bg: #2D3748;
+            --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.4);
         }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body {
-            font-family: var(--font-sans);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-            position: relative;
-        }
-        
-        /* Dynamic Background Glow */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(ellipse at center, var(--cycle-glow)10 0%, transparent 70%);
-            pointer-events: none;
-            z-index: -1;
-            opacity: 0.3;
-            animation: breathe 4s ease-in-out infinite;
-        }
-        
-        @keyframes breathe {
-            0%, 100% { opacity: 0.2; }
-            50% { opacity: 0.4; }
-        }
-        
-        /* Header */
-        .header {
-            padding: var(--spacing-sm);
-            background: var(--bg-secondary);
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-        }
-        
-        .app-title {
-            font-family: var(--font-serif);
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--accent-primary);
-        }
-        
-        .header-controls {
-            display: flex;
-            gap: var(--spacing-sm);
-            align-items: center;
-        }
-        
-        .theme-toggle {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-        
-        .theme-toggle:hover {
-            background: rgba(0,0,0,0.1);
-            transform: scale(1.1);
-        }
-        
-        .month-nav {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-        }
-        
-        .month-nav button {
-            background: none;
-            border: none;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-        }
-        
-        .month-nav button:hover {
-            background: var(--accent-primary)20;
-        }
-        
-        .current-month {
-            font-family: var(--font-serif);
-            font-size: 18px;
-            font-weight: 600;
-            min-width: 120px;
-            text-align: center;
-        }
-        
-        /* Main Content */
-        .main-content {
-            padding: var(--spacing-md);
-            max-width: 1400px;
-            margin: 0 auto;
-            padding-bottom: 100px;
-        }
-        
-        /* Calendar Layout */
-        .calendar-layout {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--spacing-lg);
-        }
-        
-        @media (min-width: 1024px) {
-            .calendar-layout {
-                grid-template-columns: 2fr 1fr;
-            }
-        }
-        
-        /* Calendar Grid */
-        .calendar-card {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: var(--spacing-md);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .calendar-header {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .day-header {
-            text-align: center;
-            font-weight: 600;
-            color: var(--text-secondary);
-            padding: var(--spacing-xs);
-            font-size: 14px;
-        }
-        
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-        }
-        
-        .calendar-day {
-            aspect-ratio: 1;
-            border: 2px solid transparent;
-            border-radius: 12px;
-            background: rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            min-height: 60px;
-        }
-        
-        .calendar-day:hover {
-            transform: scale(1.05);
-            border-color: var(--accent-primary);
-        }
-        
-        .calendar-day.today {
-            border-color: var(--accent-primary);
-            background: var(--accent-primary)20;
-        }
-        
-        .calendar-day.other-month {
-            opacity: 0.3;
-            pointer-events: none;
-        }
-        
-        /* Cycle Phase Colors */
-        .calendar-day.menstrual {
-            background: var(--menstrual)20;
-            border-color: var(--menstrual);
-        }
-        
-        .calendar-day.follicular {
-            background: var(--follicular)20;
-            border-color: var(--follicular);
-        }
-        
-        .calendar-day.ovulation {
-            background: var(--ovulation)20;
-            border-color: var(--ovulation);
-        }
-        
-        .calendar-day.luteal {
-            background: var(--luteal)20;
-            border-color: var(--luteal);
-        }
-        
-        .day-number {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 2px;
-        }
-        
-        .day-indicator {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--accent-primary);
-        }
-        
-        .day-indicator.period {
-            background: var(--menstrual);
-            width: 8px;
-            height: 8px;
-        }
-        
-        /* Side Panel */
-        .side-panel {
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-md);
-        }
-        
-        /* Food Logger */
-        .food-logger {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: var(--spacing-md);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .logger-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .logger-title {
-            font-family: var(--font-serif);
-            font-size: 20px;
-            font-weight: 600;
-        }
-        
-        .add-food-btn {
-            background: var(--accent-primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .add-food-btn:hover {
-            background: var(--accent-secondary);
-            transform: translateY(-2px);
-        }
-        
-        /* Food Presets */
-        .food-presets {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-xs);
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .food-preset {
-            background: rgba(0,0,0,0.05);
-            border: 1px solid rgba(0,0,0,0.1);
-            border-radius: 8px;
-            padding: var(--spacing-xs);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-        
-        .food-preset:hover {
-            background: var(--accent-primary)20;
-            border-color: var(--accent-primary);
-            transform: translateY(-2px);
-        }
-        
-        .preset-name {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-        
-        .preset-calories {
-            font-size: 10px;
-            color: var(--text-secondary);
-        }
-        
-        /* Food Log */
-        .food-log {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        
-        .food-entry {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-        
-        .food-entry:last-child {
-            border-bottom: none;
-        }
-        
-        .food-info {
-            flex: 1;
-        }
-        
-        .food-name {
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .food-details {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        
-        .food-calories {
-            font-weight: 600;
-            color: var(--accent-primary);
-        }
-        
-        /* Cycle Info */
-        .cycle-info {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: var(--spacing-md);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        
-        .cycle-info h3 {
-            font-family: var(--font-serif);
-            font-size: 20px;
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .cycle-phase-info {
-            background: rgba(0,0,0,0.05);
-            border-radius: 8px;
-            padding: var(--spacing-sm);
-            margin-bottom: var(--spacing-sm);
-        }
-        
-        .phase-name {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        
-        .phase-description {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-        
-        /* Modal */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-        
-        .modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .modal-content {
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            padding: var(--spacing-lg);
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            transform: scale(0.9);
-            transition: transform 0.3s ease;
-        }
-        
-        .modal.active .modal-content {
-            transform: scale(1);
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .modal-title {
-            font-family: var(--font-serif);
-            font-size: 24px;
-            font-weight: 600;
-        }
-        
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
-        
-        /* Form Styles */
-        .form-group {
-            margin-bottom: var(--spacing-md);
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid rgba(0,0,0,0.1);
-            border-radius: 8px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: var(--font-sans);
-            transition: border-color 0.3s ease;
-        }
-        
-        .form-input:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-        }
-        
-        .form-button {
-            background: var(--accent-primary);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 24px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-        }
-        
-        .form-button:hover {
-            background: var(--accent-secondary);
-            transform: translateY(-2px);
-        }
-        
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--bg-secondary);
-            border-top: 1px solid rgba(0,0,0,0.1);
-            padding: var(--spacing-sm);
-            display: flex;
-            justify-content: space-around;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: var(--text-secondary);
-            transition: all 0.3s ease;
-            padding: 8px;
-            border-radius: 8px;
-            min-width: 60px;
-        }
-        
-        .nav-item.active {
-            color: var(--accent-primary);
-            background: var(--accent-primary)20;
-        }
-        
-        .nav-item:hover {
-            color: var(--accent-primary);
-            transform: translateY(-2px);
-        }
-        
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-        
-        .nav-label {
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .main-content {
-                padding: var(--spacing-sm);
-            }
-            
-            .calendar-layout {
-                gap: var(--spacing-md);
-            }
-            
-            .calendar-day {
-                min-height: 50px;
-            }
-            
-            .day-number {
-                font-size: 14px;
-            }
-            
-            .food-presets {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease;
-        }
-        
-        /* Scrollbar Styling */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.1);
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--accent-primary);
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--accent-secondary);
-        }
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding-bottom: 120px;
+            min-height: 100vh;
+            transition: background 0.3s ease;
+        }
+
+        /* HEADER */
+        .header { padding: 40px 24px 20px; display: flex; align-items: center; justify-content: space-between; }
+        .header h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--primary); margin: 0; font-weight: 800; }
+
+        .container { padding: 0 20px; max-width: 600px; margin: 0 auto; }
+
+        /* CALENDAR CARD */
+        .cal-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-l);
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            border: 1px solid var(--border);
+        }
+
+        .cal-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .month-display { font-family: 'Playfair Display'; font-size: 1.3rem; font-weight: 700; color: var(--text-main); }
+        .nav-btn {
+            background: var(--input-bg); border: none; width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); font-size: 1.2rem;
+            transition: 0.2s;
+        }
+        .nav-btn:active { transform: scale(0.9); background: var(--primary); color: white; }
+
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.75rem; color: var(--text-sub); margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day {
+            aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 16px; font-size: 0.95rem; position: relative; cursor: pointer;
+            background: transparent; transition: 0.2s; border: 2px solid transparent; font-weight: 500;
+        }
+        .day:hover { background: var(--input-bg); }
+        .day.today { border-color: var(--primary); color: var(--primary); font-weight: 700; }
+        .day.selected { background: var(--primary); color: white !important; box-shadow: 0 4px 12px var(--primary-dim); border-color: transparent; }
+
+        /* DOT INDICATORS */
+        .dots-row { display: flex; gap: 4px; margin-top: 4px; height: 4px; }
+        .dot { width: 4px; height: 4px; border-radius: 50%; }
+        .dot.cycle { background-color: #E91E63; }
+        .dot.food { background-color: #48BB78; }
+
+        /* BOTTOM SHEET (Modal) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 1000;
+            backdrop-filter: blur(4px);
+            display: none; align-items: flex-end; opacity: 0; transition: opacity 0.3s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+
+        .sheet {
+            background: var(--bg-card); width: 100%; max-width: 600px; margin: 0 auto;
+            border-top-left-radius: 32px; border-top-right-radius: 32px;
+            padding: 32px 24px 40px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 85vh; overflow-y: auto;
+        }
+        .modal-overlay.active .sheet { transform: translateY(0); }
+
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .sheet-title { font-family: 'Playfair Display'; font-size: 1.5rem; font-weight: 700; }
+        .close-btn { background: var(--input-bg); border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; color: var(--text-sub); }
+
+        /* ACTIONS */
+        .section-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); font-weight: 700; margin-bottom: 12px; margin-top: 24px; }
+        .section-label:first-child { margin-top: 0; }
+
+        .cycle-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .action-btn {
+            padding: 16px; border-radius: var(--radius-m); border: 2px solid var(--border);
+            background: var(--bg-card); color: var(--text-main); font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;
+        }
+        .action-btn:active { transform: scale(0.96); }
+        .action-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* FOOD LIST */
+        .log-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .log-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; background: var(--input-bg); border-radius: 16px;
+        }
+        .log-name { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
+        .log-meta { font-size: 0.8rem; color: var(--text-sub); margin-top: 2px; }
+        .log-del { background: none; border: none; color: #E53E3E; opacity: 0.6; cursor: pointer; padding: 8px; }
+
+        /* TABS (Food Creator) */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; background: var(--input-bg); padding: 4px; border-radius: 16px; }
+        .tab {
+            flex: 1; padding: 10px; text-align: center; border-radius: 12px; cursor: pointer;
+            font-size: 0.9rem; font-weight: 600; color: var(--text-sub); transition: 0.2s;
+        }
+        .tab.active { background: var(--bg-card); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+        /* FORM INPUTS */
+        .form-grid { display: grid; gap: 16px; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 6px; }
+        .app-input {
+            width: 100%; padding: 14px; background: var(--input-bg); border: 2px solid transparent;
+            border-radius: 16px; font-size: 1rem; color: var(--text-main); outline: none; transition: 0.2s;
+        }
+        .app-input:focus { border-color: var(--primary); background: var(--bg-card); }
+        
+        .macro-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+        /* NAV */
+        .nav-bar {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px;
+            background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(16px);
+            border-radius: 32px; padding: 16px 32px;
+            display: flex; justify-content: space-between;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.2); z-index: 100;
+        }
+        [data-theme="dark"] .nav-bar { background: rgba(30, 30, 30, 0.9); border: 1px solid rgba(255,255,255,0.05); }
+        .nav-item { text-decoration: none; font-size: 1.6rem; color: var(--text-sub); opacity: 0.6; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); opacity: 1; transform: translateY(-4px); }
+
     </style>
 </head>
 <body>
-    <!-- Header -->
+
     <header class="header">
-        <h1 class="app-title">Calendar</h1>
-        <div class="header-controls">
-            <div class="month-nav">
-                <button id="prev-month" aria-label="Previous month">‹</button>
-                <span class="current-month" id="current-month">December 2024</span>
-                <button id="next-month" aria-label="Next month">›</button>
-            </div>
-            <button class="theme-toggle" aria-label="Toggle theme">🌓</button>
-        </div>
+        <h1>Calendar</h1>
     </header>
-    
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="calendar-layout">
-            <!-- Calendar -->
-            <div class="calendar-card">
-                <div class="calendar-header">
-                    <div class="day-header">Sun</div>
-                    <div class="day-header">Mon</div>
-                    <div class="day-header">Tue</div>
-                    <div class="day-header">Wed</div>
-                    <div class="day-header">Thu</div>
-                    <div class="day-header">Fri</div>
-                    <div class="day-header">Sat</div>
-                </div>
-                <div class="calendar-grid" id="calendar-grid">
-                    <!-- Calendar days will be generated by JavaScript -->
-                </div>
+
+    <div class="container">
+        <div class="cal-card">
+            <div class="cal-controls">
+                <button class="nav-btn" onclick="shiftMonth(-1)">‹</button>
+                <div class="month-display" id="month-label">December 2025</div>
+                <button class="nav-btn" onclick="shiftMonth(1)">›</button>
+            </div>
+
+            <div class="weekdays">
+                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
             </div>
             
-            <!-- Side Panel -->
-            <div class="side-panel">
-                <!-- Food Logger -->
-                <div class="food-logger">
-                    <div class="logger-header">
-                        <h3 class="logger-title">Food Log</h3>
-                        <button class="add-food-btn" onclick="openFoodModal()">+ Add Food</button>
-                    </div>
-                    
-                    <!-- Food Presets -->
-                    <div class="food-presets">
-                        <div class="food-preset" onclick="addPresetFood('biryani')">
-                            <div class="preset-name">Biryani</div>
-                            <div class="preset-calories">450 cal</div>
-                        </div>
-                        <div class="food-preset" onclick="addPresetFood('chai')">
-                            <div class="preset-name">Chai</div>
-                            <div class="preset-calories">120 cal</div>
-                        </div>
-                        <div class="food-preset" onclick="addPresetFood('roti')">
-                            <div class="preset-name">Roti</div>
-                            <div class="preset-calories">70 cal</div>
-                        </div>
-                        <div class="food-preset" onclick="addPresetFood('daal')">
-                            <div class="preset-name">Daal</div>
-                            <div class="preset-calories">180 cal</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Food Log -->
-                    <div class="food-log" id="food-log">
-                        <div class="food-entry" data-id="1">
-                            <div class="food-info">
-                                <div class="food-name">Chicken Biryani</div>
-                                <div class="food-details">1 cup • 15g protein</div>
-                            </div>
-                            <div class="food-calories">450 cal</div>
-                            <div class="food-actions" style="display: flex; gap: 8px;">
-                                <button onclick="editFoodEntry(1)" style="background: none; border: none; color: var(--accent-primary); cursor: pointer; font-size: 14px;" title="Edit">✏️</button>
-                                <button onclick="deleteFoodEntry(1)" style="background: none; border: none; color: #E91E63; cursor: pointer; font-size: 14px;" title="Delete">🗑️</button>
-                            </div>
-                        </div>
-                        <div class="food-entry" data-id="2">
-                            <div class="food-info">
-                                <div class="food-name">Karak Chai</div>
-                                <div class="food-details">1 cup • 3g protein</div>
-                            </div>
-                            <div class="food-calories">120 cal</div>
-                            <div class="food-actions" style="display: flex; gap: 8px;">
-                                <button onclick="editFoodEntry(2)" style="background: none; border: none; color: var(--accent-primary); cursor: pointer; font-size: 14px;" title="Edit">✏️</button>
-                                <button onclick="deleteFoodEntry(2)" style="background: none; border: none; color: #E91E63; cursor: pointer; font-size: 14px;" title="Delete">🗑️</button>
-                            </div>
-                        </div>
-                    </div>
+            <div class="days-grid" id="calendar-grid">
                 </div>
-                
-                <!-- Cycle Info -->
-                <div class="cycle-info">
-                    <h3>Cycle Information</h3>
-                    
-                    <!-- Cycle Phase Legend -->
-                    <div style="margin-bottom: var(--spacing-md);">
-                        <h4 style="margin-bottom: 8px; font-weight: 600;">Cycle Phase Colors</h4>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 14px;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 16px; height: 16px; background: var(--menstrual); border-radius: 4px;"></div>
-                                <span>Menstrual Phase</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 16px; height: 16px; background: var(--follicular); border-radius: 4px;"></div>
-                                <span>Follicular Phase</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 16px; height: 16px; background: var(--ovulation); border-radius: 4px;"></div>
-                                <span>Ovulation Phase</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <div style="width: 16px; height: 16px; background: var(--luteal); border-radius: 4px;"></div>
-                                <span>Luteal Phase</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="cycle-phase-info">
-                        <div class="phase-name" style="color: var(--luteal);">Luteal Phase</div>
-                        <div class="phase-description">
-                            Your energy may start to decline. Focus on maintaining rather than pushing limits. Yoga and stretching can help with PMS symptoms.
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: var(--spacing-sm);">
-                        <h4 style="margin-bottom: 8px; font-weight: 600;">Today's Recommendations</h4>
-                        <ul style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">
-                            <li>Moderate cardio or strength training</li>
-                            <li>Complex carbs and calcium-rich foods</li>
-                            <li>8 hours of sleep</li>
-                            <li>Balance social time with rest</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-    
-    <!-- Food Modal -->
-    <div class="modal" id="food-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Add Food</h3>
-                <button class="close-modal" onclick="closeFoodModal()">×</button>
-            </div>
-            
-            <form class="food-form" id="food-form">
-                <div class="form-group">
-                    <label class="form-label" for="food-name">Food Name</label>
-                    <input type="text" id="food-name" class="form-input" placeholder="e.g., Chicken Salad" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="food-calories">Calories</label>
-                    <input type="number" id="food-calories" class="form-input" placeholder="0" min="0" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="food-protein">Protein (g)</label>
-                    <input type="number" id="food-protein" class="form-input" placeholder="0" min="0" step="0.1">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="serving-size">Serving Size</label>
-                    <input type="text" id="serving-size" class="form-input" placeholder="e.g., 1 cup, 100g">
-                </div>
-                
-                <button type="submit" class="form-button">Add Food</button>
-            </form>
         </div>
     </div>
-    
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="index.html" class="nav-item">
-            <span class="nav-icon">🏠</span>
-            <span class="nav-label">Home</span>
-        </a>
-        <a href="calendar.html" class="nav-item active">
-            <span class="nav-icon">📅</span>
-            <span class="nav-label">Calendar</span>
-        </a>
-        <a href="progress.html" class="nav-item">
-            <span class="nav-icon">📊</span>
-            <span class="nav-label">Progress</span>
-        </a>
-        <a href="workouts.html" class="nav-item">
-            <span class="nav-icon">💪</span>
-            <span class="nav-label">Workouts</span>
-        </a>
-        <a href="analytics.html" class="nav-item">
-            <span class="nav-icon">📈</span>
-            <span class="nav-label">Analytics</span>
-        </a>
-    </nav>
-    
-    <!-- Main JavaScript -->
-    <script src="main.js"></script>
-    
-    <script>
-        // Calendar functionality
-        class CalendarManager {
-            constructor() {
-                this.currentDate = new Date();
-                this.selectedDate = new Date();
-                this.init();
-            }
-            
-            init() {
-                this.generateCalendar();
-                this.setupEventListeners();
-                this.updateCurrentMonth();
-            }
-            
-            generateCalendar() {
-                const calendarGrid = document.getElementById('calendar-grid');
-                const year = this.currentDate.getFullYear();
-                const month = this.currentDate.getMonth();
-                
-                // Clear existing calendar
-                calendarGrid.innerHTML = '';
-                
-                // Get first day of month and number of days
-                const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
-                const daysInMonth = lastDay.getDate();
-                const startingDayOfWeek = firstDay.getDay();
-                
-                // Add empty cells for days before month starts
-                for (let i = 0; i < startingDayOfWeek; i++) {
-                    const emptyDay = document.createElement('div');
-                    emptyDay.className = 'calendar-day other-month';
-                    calendarGrid.appendChild(emptyDay);
-                }
-                
-                // Add days of the month
-                for (let day = 1; day <= daysInMonth; day++) {
-                    const dayElement = document.createElement('div');
-                    const dayDate = new Date(year, month, day);
-                    
-                    dayElement.className = 'calendar-day';
-                    dayElement.innerHTML = `
-                        <div class="day-number">${day}</div>
-                        <div class="day-indicator"></div>
-                    `;
-                    
-                    // Check if it's today
-                    if (this.isToday(dayDate)) {
-                        dayElement.classList.add('today');
-                    }
-                    
-                    // Add cycle phase coloring
-                    const cyclePhase = this.getCyclePhase(dayDate);
-                    if (cyclePhase) {
-                        dayElement.classList.add(cyclePhase);
-                    }
-                    
-                    // Add period indicator
-                    if (this.isPeriodDay(dayDate)) {
-                        const indicator = dayElement.querySelector('.day-indicator');
-                        indicator.classList.add('period');
-                    }
-                    
-                    // Add click event
-                    dayElement.addEventListener('click', () => {
-                        this.selectDate(dayDate);
-                    });
-                    
-                    calendarGrid.appendChild(dayElement);
-                }
-                
-                // Fill remaining cells
-                const totalCells = calendarGrid.children.length;
-                const remainingCells = 42 - totalCells; // 6 rows × 7 days
-                
-                for (let i = 0; i < remainingCells; i++) {
-                    const emptyDay = document.createElement('div');
-                    emptyDay.className = 'calendar-day other-month';
-                    calendarGrid.appendChild(emptyDay);
-                }
-            }
-            
-            isToday(date) {
-                const today = new Date();
-                return date.toDateString() === today.toDateString();
-            }
-            
-            getCyclePhase(date) {
-                // This would integrate with the main fitness tracker
-                // For now, using a simplified version
-                const cycleDay = this.getCycleDay(date);
-                
-                if (cycleDay <= 5) return 'menstrual';
-                if (cycleDay <= 12) return 'follicular';
-                if (cycleDay <= 15) return 'ovulation';
-                return 'luteal';
-            }
-            
-            getCycleDay(date) {
-                // Simplified cycle calculation
-                // In real implementation, this would use the fitness tracker's calculation
-                const lastPeriod = new Date();
-                lastPeriod.setDate(lastPeriod.getDate() - 25); // 25 days ago
-                
-                const diffTime = date - lastPeriod;
-                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
-                return (diffDays % 29) + 1; // Assuming 29-day cycle
-            }
-            
-            isPeriodDay(date) {
-                const cycleDay = this.getCycleDay(date);
-                return cycleDay >= 1 && cycleDay <= 5;
-            }
-            
-            selectDate(date) {
-                this.selectedDate = date;
-                
-                // Remove previous selection
-                document.querySelectorAll('.calendar-day.selected').forEach(day => {
-                    day.classList.remove('selected');
-                });
-                
-                // Add selection to clicked day
-                event.target.closest('.calendar-day').classList.add('selected');
-                
-                // Update food log for selected date
-                this.updateFoodLog(date);
-            }
-            
-            updateFoodLog(date) {
-                // This would load food log for the selected date
-                // For now, showing a placeholder
-                console.log('Loading food log for:', date.toDateString());
-            }
-            
-            updateCurrentMonth() {
-                const monthNames = [
-                    'January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'
-                ];
-                
-                const monthElement = document.getElementById('current-month');
-                if (monthElement) {
-                    monthElement.textContent = `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
-                }
-            }
-            
-            setupEventListeners() {
-                // Previous month button
-                document.getElementById('prev-month').addEventListener('click', () => {
-                    this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-                    this.generateCalendar();
-                    this.updateCurrentMonth();
-                });
-                
-                // Next month button
-                document.getElementById('next-month').addEventListener('click', () => {
-                    this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-                    this.generateCalendar();
-                    this.updateCurrentMonth();
-                });
-            }
-        }
-        
-        // Food logging functionality
-        function openFoodModal() {
-            document.getElementById('food-modal').classList.add('active');
-        }
-        
-        function closeFoodModal() {
-            document.getElementById('food-modal').classList.remove('active');
-            document.getElementById('food-form').reset();
-        }
-        
-        function addPresetFood(foodId) {
-            // This would integrate with the food presets data
-            const presets = {
-                biryani: { name: 'Chicken Biryani', calories: 450, protein: 15 },
-                chai: { name: 'Karak Chai', calories: 120, protein: 3 },
-                roti: { name: 'Whole Wheat Roti', calories: 70, protein: 2 },
-                daal: { name: 'Masoor Daal', calories: 180, protein: 12 }
-            };
-            
-            const food = presets[foodId];
-            if (food) {
-                addFoodToLog(food);
-            }
-        }
-        
-        function addFoodToLog(food) {
-            const foodLog = document.getElementById('food-log');
-            const entry = document.createElement('div');
-            entry.className = 'food-entry';
-            entry.innerHTML = `
-                <div class="food-info">
-                    <div class="food-name">${food.name}</div>
-                    <div class="food-details">1 serving • ${food.protein}g protein</div>
+
+    <div class="modal-overlay" id="day-sheet">
+        <div class="sheet">
+            <div class="sheet-header">
+                <h2 class="sheet-title" id="sheet-date-title">Date</h2>
+                <button class="close-btn" onclick="closeSheet('day-sheet')">×</button>
+            </div>
+
+            <div class="section-label">Cycle Control</div>
+            <div class="cycle-actions">
+                <button class="action-btn" onclick="logCycle('start')">🩸 Period Start</button>
+                <button class="action-btn" onclick="logCycle('end')">🏁 Period End</button>
+            </div>
+
+            <div class="section-label">Nutrition Log</div>
+            <div id="day-food-list" class="log-list">
                 </div>
-                <div class="food-calories">${food.calories} cal</div>
-            `;
             
-            foodLog.appendChild(entry);
-            
-            // Animate the new entry
-            entry.style.opacity = '0';
-            entry.style.transform = 'translateY(10px)';
-            
-            setTimeout(() => {
-                entry.style.transition = 'all 0.3s ease';
-                entry.style.opacity = '1';
-                entry.style.transform = 'translateY(0)';
-            }, 10);
-        }
-        
-        // Form submission
-        document.getElementById('food-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(e.target);
-            const food = {
-                id: Date.now(), // Unique ID for editing
-                name: formData.get('food-name'),
-                calories: parseInt(formData.get('food-calories')),
-                protein: parseFloat(formData.get('food-protein') || 0),
-                servingSize: formData.get('serving-size') || '1 serving'
-            };
-            
-            addFoodToLog(food);
-            closeFoodModal();
-        });
-        
-        // Food editing and deletion functions
-        function editFoodEntry(id) {
-            // This would open the food modal with pre-filled data
-            console.log('Editing food entry:', id);
-            alert('Food editing feature - would open modal with current values');
-        }
-        
-        function deleteFoodEntry(id) {
-            if (confirm('Are you sure you want to delete this food entry? 💕')) {
-                const entry = document.querySelector(`[data-id="${id}"]`);
-                if (entry) {
-                    entry.style.transition = 'all 0.3s ease';
-                    entry.style.opacity = '0';
-                    entry.style.transform = 'translateX(-100px)';
-                    
-                    setTimeout(() => {
-                        entry.remove();
-                        showNotification('Food entry deleted successfully! 🌸');
-                    }, 300);
-                }
-            }
-        }
-        
-        // Initialize calendar when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            new CalendarManager();
-            
-            // Theme toggle functionality
-            const themeToggle = document.querySelector('.theme-toggle');
-            themeToggle.addEventListener('click', () => {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            <button class="action-btn primary" style="width:100%" onclick="openFoodCreator()">
+                <span>+ Log Food</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="food-sheet">
+        <div class="sheet">
+            <div class="sheet-header">
+                <h2 class="sheet-title">Log Nutrition</h2>
+                <button class="close-btn" onclick="closeSheet('food-sheet')">×</button>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('library')" id="tab-btn-lib">Library</div>
+                <div class="tab" onclick="switchTab('create')" id="tab-btn-new">Create New</div>
+            </div>
+
+            <div id="view-library">
+                <input type="text" class="app-input" placeholder="Search saved foods..." id="lib-search" onkeyup="renderLibrary()">
+                <div class="log-list" id="lib-list" style="margin-top:16px; max-height:300px; overflow-y:auto;">
+                    </div>
+            </div>
+
+            <div id="view-create" style="display:none;" class="form-grid">
+                <div class="input-group">
+                    <label>Food Name</label>
+                    <input type="text" id="new-name" class="app-input" placeholder="e.g. Mom's Pasta">
+                </div>
                 
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-            });
+                <div class="input-group">
+                    <label>Calories</label>
+                    <input type="number" id="new-cals" class="app-input" placeholder="kcal">
+                </div>
+
+                <div class="macro-row">
+                    <div class="input-group">
+                        <label>Prot</label>
+                        <input type="number" id="new-p" class="app-input">
+                    </div>
+                    <div class="input-group">
+                        <label>Carb</label>
+                        <input type="number" id="new-c" class="app-input">
+                    </div>
+                    <div class="input-group">
+                        <label>Fat</label>
+                        <input type="number" id="new-f" class="app-input">
+                    </div>
+                    <div class="input-group">
+                        <label>Fiber</label>
+                        <input type="number" id="new-fiber" class="app-input">
+                    </div>
+                </div>
+
+                <button class="action-btn primary" onclick="saveNewFood()">Save & Log</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <a href="index.html" class="nav-item">🏠</a>
+        <a href="calendar.html" class="nav-item active">📅</a>
+        <a href="workouts.html" class="nav-item">🧘‍♀️</a>
+        <a href="progress.html" class="nav-item">📊</a>
+        <a href="analytics.html" class="nav-item">📈</a>
+    </nav>
+
+    <script src="main.js"></script>
+    <script>
+        // === CALENDAR LOGIC ===
+
+        let viewDate = new Date();
+        let selectedDateKey = new Date().toISOString().split('T')[0];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCalendar();
             
-            // Load saved theme
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            // Listen for data changes to auto-refresh dots
+            window.addEventListener('rehma_update', (e) => {
+                applyTheme(e.detail.theme);
+                renderCalendar(); 
+                if(document.getElementById('day-sheet').classList.contains('active')) {
+                    openDaySheet(selectedDateKey); // Refresh list
+                }
+            });
+
+            // Initial Theme
+            if(window.healthOS) applyTheme(window.healthOS.state.settings.theme);
         });
-        
-        // Close modal when clicking outside
-        document.getElementById('food-modal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                closeFoodModal();
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            
+            // Update Label
+            document.getElementById('month-label').textContent = 
+                viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            // Access Brain Data
+            const logs = window.healthOS ? window.healthOS.state.logs : { nutrition: {} };
+            const cycles = window.healthOS ? window.healthOS.state.cycle.events : [];
+
+            // Padding Days
+            for(let i=0; i<firstDay; i++) {
+                grid.innerHTML += '<div></div>';
             }
-        });
+
+            // Days
+            for(let d=1; d<=daysInMonth; d++) {
+                const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const el = document.createElement('button');
+                el.className = `day ${dateKey === todayStr ? 'today' : ''}`;
+                if(dateKey === selectedDateKey && document.querySelector('.modal-overlay.active')) {
+                    el.classList.add('selected');
+                }
+                
+                el.innerHTML = `<span>${d}</span>`;
+                
+                // Dots container
+                const dots = document.createElement('div');
+                dots.className = 'dots-row';
+
+                // Check Data for Dots
+                // 1. Cycle Dot
+                const isCycleEvent = cycles.some(e => e.date === dateKey);
+                if(isCycleEvent) dots.innerHTML += `<div class="dot cycle"></div>`;
+
+                // 2. Food Dot
+                if(logs.nutrition[dateKey] && logs.nutrition[dateKey].length > 0) {
+                    dots.innerHTML += `<div class="dot food"></div>`;
+                }
+
+                el.appendChild(dots);
+                el.onclick = () => openDaySheet(dateKey);
+                grid.appendChild(el);
+            }
+        }
+
+        function shiftMonth(delta) {
+            viewDate.setMonth(viewDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        // === DAY SHEET LOGIC ===
+
+        function openDaySheet(dateStr) {
+            selectedDateKey = dateStr;
+            const displayDate = new Date(dateStr + 'T00:00:00'); // Force local time
+            document.getElementById('sheet-date-title').textContent = displayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' });
+            
+            renderFoodLog(dateStr);
+            
+            document.getElementById('day-sheet').classList.add('active');
+            renderCalendar(); // Update selection highlight
+        }
+
+        function closeSheet(id) {
+            document.getElementById(id).classList.remove('active');
+            if(id === 'food-sheet') document.getElementById('day-sheet').classList.add('active'); // Re-show day sheet
+            renderCalendar();
+        }
+
+        // Cycle Actions
+        function logCycle(type) {
+            if(confirm(`Log Period ${type.toUpperCase()} on this day?`)) {
+                if(type === 'start') window.healthOS.logPeriodStart(selectedDateKey);
+                else window.healthOS.logPeriodEnd(selectedDateKey);
+            }
+        }
+
+        // Nutrition List
+        function renderFoodLog(dateStr) {
+            const list = document.getElementById('day-food-list');
+            list.innerHTML = '';
+            
+            if(!window.healthOS) return;
+            const foods = window.healthOS.state.logs.nutrition[dateStr] || [];
+
+            if(foods.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color:var(--text-sub); padding:10px;">No logs yet.</div>`;
+                return;
+            }
+
+            foods.forEach(f => {
+                list.innerHTML += `
+                <div class="log-item">
+                    <div>
+                        <div class="log-name">${f.name}</div>
+                        <div class="log-meta">${f.cals} kcal • P:${f.p} C:${f.c} F:${f.f}</div>
+                    </div>
+                    <button class="log-del" onclick="removeFood('${f.id}')">Remove</button>
+                </div>`;
+            });
+        }
+
+        function removeFood(id) {
+            window.healthOS.removeFood(selectedDateKey, parseInt(id));
+            openDaySheet(selectedDateKey); // Refresh
+        }
+
+        // === FOOD CREATOR LOGIC ===
+
+        function openFoodCreator() {
+            document.getElementById('day-sheet').classList.remove('active');
+            document.getElementById('food-sheet').classList.add('active');
+            switchTab('library');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if(tab === 'library') {
+                document.getElementById('tab-btn-lib').classList.add('active');
+                document.getElementById('view-library').style.display = 'block';
+                document.getElementById('view-create').style.display = 'none';
+                renderLibrary();
+            } else {
+                document.getElementById('tab-btn-new').classList.add('active');
+                document.getElementById('view-library').style.display = 'none';
+                document.getElementById('view-create').style.display = 'grid';
+            }
+        }
+
+        function renderLibrary() {
+            const query = document.getElementById('lib-search').value.toLowerCase();
+            const container = document.getElementById('lib-list');
+            container.innerHTML = '';
+
+            if(!window.healthOS) return;
+            const library = window.healthOS.state.library;
+
+            const filtered = library.filter(f => f.name.toLowerCase().includes(query));
+
+            filtered.forEach(f => {
+                const el = document.createElement('div');
+                el.className = 'log-item';
+                el.style.cursor = 'pointer';
+                el.onclick = () => {
+                    window.healthOS.logFood(selectedDateKey, f);
+                    closeSheet('food-sheet');
+                };
+                el.innerHTML = `
+                    <div>
+                        <div class="log-name">${f.name}</div>
+                        <div class="log-meta">${f.cals} kcal</div>
+                    </div>
+                    <div style="font-size:1.2rem; color:var(--primary);">+</div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function saveNewFood() {
+            const name = document.getElementById('new-name').value;
+            if(!name) return alert("Please name your food");
+
+            const food = {
+                name: name,
+                cals: document.getElementById('new-cals').value || 0,
+                p: document.getElementById('new-p').value || 0,
+                c: document.getElementById('new-c').value || 0,
+                f: document.getElementById('new-f').value || 0,
+                fiber: document.getElementById('new-fiber').value || 0
+            };
+
+            window.healthOS.logFood(selectedDateKey, food);
+            
+            // Clear Form
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-cals').value = '';
+            
+            closeSheet('food-sheet');
+        }
+
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+
     </script>
 </body>
 </html>
